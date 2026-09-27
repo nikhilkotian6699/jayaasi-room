@@ -3,11 +3,22 @@
 import { useState } from 'react';
 import { hotel, rooms } from '@/lib/mock-data';
 
-export default function GuestHeader({ hotelName = 'Hotel name', pageTitle = null }) {
+export default function GuestHeader({
+  brandName = 'Jayaasi Room',
+  brandSubtitle = 'Business Suite',
+  hotelName = 'Hotel name',
+  pageTitle = null,
+}) {
   const room = rooms.find(r => r.number === '204') || rooms[0];
   const [activeModal, setActiveModal] = useState(null);
   const [selectedLang, setSelectedLang] = useState('EN');
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Live editable state
+  const [currentBrandName, setCurrentBrandName] = useState(brandName);
+  const [currentSubtitle, setCurrentSubtitle] = useState(brandSubtitle);
+  const [currentHotelName, setCurrentHotelName] = useState(hotelName);
+  const [currentPageTitle, setCurrentPageTitle] = useState(pageTitle);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -35,7 +46,7 @@ export default function GuestHeader({ hotelName = 'Hotel name', pageTitle = null
           color: '#ffffff',
           padding: '10px 20px',
           borderRadius: '999px',
-          zIndex: 999,
+          zIndex: 9999,
           fontSize: '13px',
           fontWeight: '600',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
@@ -48,11 +59,36 @@ export default function GuestHeader({ hotelName = 'Hotel name', pageTitle = null
       {/* ─── Top Luxury Header ────────────────────────────────────────── */}
       <header className="guest-header-wrapper">
         <div className="guest-header-banner">
+          {/* Base Background Texture without baked-in text */}
           <img 
-            src="/images/jayaasi_header_perfect.png" 
-            alt="Jayaasi Room Business Suite - Hotel name"
+            src="/images/jayaasi_header_base_clean.png" 
+            alt="Jayaasi Room Business Suite"
             className="guest-header-img"
           />
+
+          {/* Live Editable Brand Title & Subtitle */}
+          <div className="guest-header-brand-box">
+            <div 
+              className="guest-header-brand-title editable-text"
+              contentEditable
+              suppressContentEditableWarning
+              spellCheck={false}
+              title="Click to edit Brand Name"
+              onBlur={(e) => setCurrentBrandName(e.currentTarget.textContent)}
+            >
+              {currentBrandName}
+            </div>
+            <div 
+              className="guest-header-brand-subtitle editable-text"
+              contentEditable
+              suppressContentEditableWarning
+              spellCheck={false}
+              title="Click to edit Subtitle"
+              onBlur={(e) => setCurrentSubtitle(e.currentTarget.textContent)}
+            >
+              {currentSubtitle}
+            </div>
+          </div>
 
           {/* Hotspot 1: Centered Profile Avatar */}
           <button 
@@ -72,6 +108,32 @@ export default function GuestHeader({ hotelName = 'Hotel name', pageTitle = null
             title="Select Language"
           />
 
+          {/* Live Editable Hotel Name in Left Silver Tab */}
+          <div 
+            className="guest-header-hotel-title editable-text"
+            contentEditable
+            suppressContentEditableWarning
+            spellCheck={false}
+            title="Click to edit Hotel Name"
+            onBlur={(e) => setCurrentHotelName(e.currentTarget.textContent)}
+          >
+            {currentHotelName}
+          </div>
+
+          {/* Page Title in Center Gap between tabs (e.g. 'Cab serviecs') */}
+          {pageTitle && (
+            <div 
+              className="guest-header-page-title editable-text"
+              contentEditable
+              suppressContentEditableWarning
+              spellCheck={false}
+              title="Click to edit Page Title"
+              onBlur={(e) => setCurrentPageTitle(e.currentTarget.textContent)}
+            >
+              {currentPageTitle}
+            </div>
+          )}
+
           {/* Hotspot 3: Phone Reception Call Button */}
           <button 
             type="button"
@@ -80,22 +142,10 @@ export default function GuestHeader({ hotelName = 'Hotel name', pageTitle = null
             aria-label="Call Reception"
             title="Call Reception"
           />
-
-          {/* Page Title in Center Gap between tabs (e.g. 'services') */}
-          {pageTitle && (
-            <div className="guest-header-page-title">
-              {pageTitle}
-            </div>
-          )}
-
-          {/* Optional: Dynamic hotel name badge if not default 'Hotel name' */}
-          {hotelName && hotelName !== 'Hotel name' && (
-            <div className="guest-header-custom-hotel-badge">
-              {hotelName}
-            </div>
-          )}
         </div>
       </header>
+      {/* Structural spacer matching fixed header height */}
+      <div className="guest-header-spacer" aria-hidden="true" />
 
       {/* ─── MODAL: Call Hotel Reception ─────────────────────────────── */}
       {activeModal === 'call' && (
