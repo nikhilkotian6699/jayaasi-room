@@ -1,0 +1,50 @@
+.title {
+  font: 700 22px 'Manrope', sans-serif;
+  letter-spacing: -0.5px;
+  margin: 0 0 20px;
+  color: var(--ink);
+}
+
+.requestCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid #f0f2ef;
+  gap: 16px;
+}
+
+.requestCard:first-of-type {
+  border-top: none;
+}
+
+.requestLeft { flex: 1; }
+
+.requestRoom {
+  font: 700 14px 'Manrope', sans-serif;
+  color: var(--ink);
+}
+
+.requestService {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-top: 3px;
+}
+
+.requestMeta {
+  font-size: 10px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.highBadge {
+  background: var(--red-pale);
+  color: var(--red);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}

@@ -1,0 +1,1207 @@
+/* ─── Jayaasi Room — Luxury Mobile Experience ─────────────────────── */
+:root {
+  --guest-maroon: #7a0c24;
+  --guest-maroon-dark: #580618;
+  --guest-maroon-light: #9e1837;
+  --guest-maroon-gradient: linear-gradient(135deg, #870f2b 0%, #a31939 45%, #62081d 100%);
+  --guest-gold: #e5b869;
+  --guest-gold-light: #fbe6b8;
+  --guest-gold-dark: #b88636;
+  --guest-dark-nav: #18191b;
+}
+
+/* ─── Guest Shell — Mobile-First ─────────────────────────────────── */
+.guest-shell {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #fcfcfd;
+  position: relative;
+  overflow-x: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Guest Luxury Header (Mockup Exact Match) ─────────────────────── */
+.guest-header-wrapper {
+  margin: 12px 14px 4px;
+  position: relative;
+  user-select: none;
+}
+
+.guest-header-banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 927 / 276;
+}
+
+.guest-header-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.08));
+}
+
+/* Hotspot Buttons: Invisible tactile click areas positioned over graphic */
+.guest-hotspot-btn {
+  position: absolute;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hotspot 1: Centered Profile Avatar Circle */
+.guest-hotspot-avatar {
+  top: 9%;
+  left: 44.5%;
+  width: 11%;
+  height: 48%;
+  border-radius: 50%;
+}
+.guest-hotspot-avatar:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.06);
+}
+.guest-hotspot-avatar:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Hotspot 2: Language Selector (文A) */
+.guest-hotspot-lang {
+  top: 14%;
+  right: 4.5%;
+  width: 11.5%;
+  height: 38%;
+  border-radius: 12px;
+}
+.guest-hotspot-lang:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.05);
+}
+.guest-hotspot-lang:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* Hotspot 3: Phone Reception Call Button */
+.guest-hotspot-call {
+  bottom: 5%;
+  right: 5%;
+  width: 16%;
+  height: 34%;
+  border-radius: 14px;
+}
+.guest-hotspot-call:hover {
+  background: rgba(0, 0, 0, 0.06);
+  transform: scale(1.05);
+}
+.guest-hotspot-call:active {
+  transform: scale(0.94);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Dynamic hotel badge overlay if custom hotel name provided */
+.guest-header-custom-hotel-badge {
+  position: absolute;
+  left: 3%;
+  bottom: 8%;
+  width: 28%;
+  height: 28%;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #c5c6c9;
+  padding: 0 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Page Title in Center Gap (e.g. 'services') */
+.guest-header-page-title {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  font-size: 19px;
+  font-weight: 800;
+  color: #7e0a22;
+  letter-spacing: -0.3px;
+  text-transform: lowercase;
+  pointer-events: none;
+  font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+/* ─── Main Content Container ──────────────────────────────────────── */
+.guest-main-body {
+  padding: 14px 16px 110px;
+}
+
+/* ─── Services 2-Column Mockup Grid ───────────────────────────────── */
+.guest-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.guest-service-card-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  aspect-ratio: 186 / 98;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.guest-service-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+}
+
+.guest-service-card-btn:active {
+  transform: scale(0.96);
+}
+
+.guest-service-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Hero Carousel ───────────────────────────────────────────────── */
+.guest-hero-carousel {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.14);
+  background: #111;
+  user-select: none;
+}
+
+.guest-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: scale(1.02);
+}
+
+.guest-hero-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.guest-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.guest-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.05) 35%,
+    rgba(0, 0, 0, 0.1) 60%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+  pointer-events: none;
+}
+
+.guest-hero-tag {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+.guest-carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(18, 18, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.2s ease;
+}
+
+.guest-carousel-nav-btn:hover {
+  background: rgba(18, 18, 18, 0.85);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.guest-carousel-prev {
+  left: 12px;
+}
+
+.guest-carousel-next {
+  right: 12px;
+}
+
+.guest-hero-cta-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.guest-hero-cta-btn:hover {
+  background: rgba(122, 12, 36, 0.85);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateX(-50%) scale(1.04);
+}
+
+.guest-carousel-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 3;
+}
+
+.guest-carousel-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.guest-carousel-dot.active {
+  background: #ffffff;
+  width: 14px;
+  border-radius: 999px;
+}
+
+/* ─── 2x2 Services Grid (Matching Mockup) ─────────────────────────── */
+.guest-mosaic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.guest-mosaic-card {
+  position: relative;
+  height: 104px;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #222;
+}
+
+.guest-mosaic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
+}
+
+.guest-mosaic-card:active {
+  transform: scale(0.98);
+}
+
+.guest-mosaic-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.guest-mosaic-card:hover .guest-mosaic-image {
+  transform: scale(1.06);
+}
+
+.guest-mosaic-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.45) 100%);
+  pointer-events: none;
+}
+
+.guest-mosaic-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #870f2b 0%, #5d061a 100%);
+  color: #ffffff;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.guest-mosaic-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.guest-mosaic-card:hover .guest-mosaic-arrow {
+  opacity: 1;
+  transform: translateY(-50%) translateX(2px);
+}
+
+/* ─── Jayaasi Business Store Promotional Banner ───────────────────── */
+.guest-store-banner {
+  margin-top: 14px;
+  background: linear-gradient(90deg, #6c0c22 0%, #82102b 40%, #4a0616 100%);
+  border-radius: 20px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 8px 22px rgba(108, 12, 34, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guest-store-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(108, 12, 34, 0.3);
+}
+
+.guest-store-banner::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: 80px;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.guest-store-left {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.guest-store-title {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.guest-store-sub {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+.guest-store-media {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.guest-store-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guest-store-shop-btn {
+  background: #ffffff;
+  color: #720820;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.guest-store-shop-btn:hover {
+  background: #fff8f8;
+  transform: scale(1.04);
+}
+
+/* ─── Exact Floating Curved Dark Bottom Navigation Dock ─────────────── */
+.guest-bottom-dock-wrapper {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 396px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* The dark arched dome rising seamlessly above the dock */
+.guest-dock-arch-dome {
+  position: absolute;
+  top: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 68px;
+  height: 52px;
+  background: #222222;
+  border-radius: 34px 34px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 4px;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.guest-dock-services-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.guest-dock-services-circle img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 3px 8px rgba(220, 20, 50, 0.45));
+}
+
+.guest-dock-services-circle:hover {
+  transform: scale(1.08);
+  filter: brightness(1.12);
+}
+
+.guest-dock-services-circle:active {
+  transform: scale(0.96);
+}
+
+.guest-bottom-dock {
+  width: 100%;
+  height: 58px;
+  background: #222222;
+  border-radius: 30px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.guest-dock-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  flex-shrink: 0;
+}
+
+.guest-dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  color: #c4c7cf;
+  font-size: 8px;
+  font-weight: 600;
+  padding: 5px 4px;
+  border-radius: 12px;
+  transition: all 0.18s ease;
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.guest-dock-item:hover {
+  color: #ffffff;
+}
+
+.guest-dock-item.active {
+  background: radial-gradient(circle, #5b101d 0%, #3c0913 100%);
+  border: 1px solid rgba(220, 20, 50, 0.5);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 5px 8px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 2px 8px rgba(180, 15, 40, 0.35);
+}
+
+.guest-dock-icon {
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.guest-dock-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.guest-dock-icon {
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Modals (Call, Language, Store) ──────────────────────────────── */
+.guest-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  animation: fadeIn 0.2s ease;
+}
+
+@media (min-width: 600px) {
+  .guest-modal-backdrop {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+.guest-modal-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 28px 28px 0 0;
+  padding: 24px 20px 32px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.25s ease;
+}
+
+@media (min-width: 600px) {
+  .guest-modal-card {
+    border-radius: 28px;
+    padding: 26px;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.guest-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.guest-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+}
+
+.guest-modal-close {
+  background: #f0f2f5;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #555;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.guest-call-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guest-call-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9f9fb;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.guest-call-item:hover {
+  background: #fdf3f5;
+  border-color: #f2cbd3;
+  transform: translateY(-1px);
+}
+
+.guest-lang-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.guest-lang-option {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.guest-lang-option.active {
+  border-color: var(--guest-maroon);
+  background: #fdf3f5;
+  color: var(--guest-maroon);
+}
+
+
+/* ─── Room Card ──────────────────────────────────────────────────── */
+.guest-room-card {
+  margin: 18px 20px 0;
+  background: linear-gradient(135deg, #d9e7db 0%, #eef1e8 100%);
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.guest-room-card::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+.guest-room-label {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: #69776c;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guest-room-name {
+  font: 700 19px 'Manrope', sans-serif;
+  margin: 6px 0 0;
+  color: var(--ink);
+}
+
+.guest-room-wifi {
+  font-size: 10px;
+  color: #69776c;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Services Grid ──────────────────────────────────────────────── */
+.guest-section-title {
+  font: 700 14px 'Manrope', sans-serif;
+  padding: 22px 20px 10px;
+  color: var(--ink);
+}
+
+.guest-services-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.guest-service-btn {
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: left;
+  color: var(--ink-secondary);
+  transition: all 0.18s;
+  text-decoration: none;
+  display: block;
+}
+
+.guest-service-btn:hover {
+  border-color: #b9d3c1;
+  background: #fbfdfb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(35, 99, 74, 0.06);
+}
+
+.guest-service-btn:active {
+  transform: translateY(0);
+}
+
+.guest-service-icon {
+  font-size: 22px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.guest-service-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.guest-service-desc {
+  font-size: 9px;
+  color: var(--ink-muted);
+  margin-top: 3px;
+}
+
+/* ─── Maya Assistant Button ──────────────────────────────────────── */
+.guest-maya-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 20px 0;
+  padding: 14px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  width: calc(100% - 40px);
+  transition: background 0.18s;
+}
+
+.guest-maya-btn:hover {
+  background: var(--green-dark);
+}
+
+/* ─── Bottom Nav ─────────────────────────────────────────────────── */
+.guest-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  z-index: 10;
+}
+
+.guest-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 9px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s;
+  border-radius: 8px;
+}
+
+.guest-nav-item:hover {
+  color: var(--green);
+}
+
+.guest-nav-active {
+  color: var(--green) !important;
+}
+
+.guest-nav-icon {
+  font-size: 18px;
+}
+
+/* ─── Guest Content Area ─────────────────────────────────────────── */
+.guest-content {
+  padding-bottom: 80px;
+}
+
+/* ─── Guest Page Header ──────────────────────────────────────────── */
+.guest-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.guest-back-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--ink-secondary);
+}
+
+.guest-page-title {
+  font: 700 18px 'Manrope', sans-serif;
+  color: var(--ink);
+}
+
+/* ─── Guest Menu Item Card ───────────────────────────────────────── */
+.guest-menu-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guest-menu-emoji {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.guest-menu-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.guest-menu-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.guest-menu-desc {
+  font-size: 10px;
+  color: var(--ink-muted);
+  margin-top: 3px;
+}
+
+.guest-menu-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.guest-menu-price {
+  font: 700 14px 'Manrope', sans-serif;
+  color: var(--ink);
+}
+
+.guest-add-btn {
+  padding: 6px 14px;
+  background: var(--green-pale);
+  color: var(--green);
+  border: 1px solid var(--green-pale);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.guest-add-btn:hover {
+  background: var(--green);
+  color: white;
+}
+
+/* ─── Guest Orders ───────────────────────────────────────────────── */
+.guest-order-card {
+  margin: 0 20px 10px;
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.guest-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.guest-order-id {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.guest-order-items {
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.guest-order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font: 700 13px 'Manrope', sans-serif;
+}
+
+/* ─── Guest Room Info ────────────────────────────────────────────── */
+.guest-info-section {
+  padding: 0 20px 16px;
+}
+
+.guest-info-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.guest-info-card h3 {
+  font: 700 12px 'Manrope', sans-serif;
+  padding: 14px 16px 0;
+  margin: 0;
+}
+
+.guest-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f5f6f4;
+  font-size: 12px;
+}
+
+.guest-info-row:last-child { border-bottom: none; }
+
+.guest-info-label {
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.guest-info-value {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+/* ─── Guest Request Form ─────────────────────────────────────────── */
+.guest-form {
+  padding: 0 20px;
+}
+
+.guest-form .field {
+  margin-bottom: 16px;
+}
+
+.guest-form .field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.guest-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 8px;
+  transition: background 0.18s;
+}
+
+.guest-submit-btn:hover {
+  background: var(--green-dark);
+}
+
+/* ─── Nearby Places (Guest) ──────────────────────────────────────── */
+.guest-place-list {
+  padding: 0 20px;
+}
+
+.guest-place-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+
+.guest-place-card:hover {
+  border-color: var(--line-strong);
+}
+
+.guest-place-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--green-pale);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.guest-place-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.guest-place-detail {
+  font-size: 10px;
+  color: var(--ink-muted);
+  margin-top: 2px;
+}
