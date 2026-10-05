@@ -2,11 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import GuestHeader from '@/components/guest/GuestHeader';
 import GuestFooter from '@/components/guest/GuestFooter';
 
 export default function MaintenancePage() {
-  const baseUrl = '/jayaasi-rooms/204';
+  const params = useParams() || {};
+  const hotelSlug = params.hotelSlug || 'jayaasi-rooms';
+  const roomId = params.roomId || '204';
+  const baseUrl = `/${hotelSlug}/${roomId}`;
   const [issueType, setIssueType] = useState('Air Conditioning');
   const [urgency, setUrgency] = useState('Standard');
   const [toastMessage, setToastMessage] = useState(null);

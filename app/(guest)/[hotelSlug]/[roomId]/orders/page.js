@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import GuestHeader from '@/components/guest/GuestHeader';
 import GuestFooter from '@/components/guest/GuestFooter';
 import { requests, orders } from '@/lib/mock-data';
 import { statusClass, formatPrice } from '@/lib/utils';
 
 export default function GuestOrdersPage() {
-  const baseUrl = '/jayaasi-rooms/204';
-  const myRequests = requests.filter(r => r.room === '204');
-  const myOrders = orders.filter(o => o.room === '204');
+  const params = useParams() || {};
+  const hotelSlug = params.hotelSlug || 'jayaasi-rooms';
+  const roomId = params.roomId || '204';
+  const baseUrl = `/${hotelSlug}/${roomId}`;
+  const myRequests = requests.filter(r => r.room === roomId);
+  const myOrders = orders.filter(o => o.room === roomId);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {

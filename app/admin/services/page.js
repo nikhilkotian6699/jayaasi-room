@@ -1,48 +1,146 @@
 'use client';
 
 import { useState } from 'react';
-import { services as initialServices } from '@/lib/mock-data';
-import styles from './services.module.css';
+import { SERVICE_CATALOG } from '@/lib/admin-data';
 
-export default function ServicesPage() {
-  const [serviceList, setServiceList] = useState(initialServices);
+export default function AdminServicesPage() {
+  const [items, setItems] = useState(SERVICE_CATALOG);
+  const [filter, setFilter] = useState('All');
 
-  const toggleService = (idx) => {
-    setServiceList(prev => prev.map((s, i) => i === idx ? { ...s, active: !s.active } : s));
+  const toggleStock = (id) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, inStock: !item.inStock } : item))
+    );
   };
 
+  const categories = ['All', 'Food & Dining', 'Housekeeping', 'Laundry Care', 'Cab Services', 'Jayaasi Store'];
+
+  const filteredItems = items.filter((item) =>
+    filter === 'All' ? true : item.category === filter
+  );
+
   return (
-    <div className="animate-in">
-      <div className={styles.pageHeading}>
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <div className={styles.eyebrow}>JAYAASI ROOMS · BUSINESS SUITE</div>
-          <h1 className={styles.title}>Services</h1>
-          <p className={styles.subtitle}>Choose what guests can request from their room.</p>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 4px', color: '#0f172a' }}>
+            Service Catalog & In-Room Amenities
+          </h2>
+          <span style={{ fontSize: '13px', color: '#64748b' }}>
+            Manage room service items, pricing, department dispatch, and live guest menu availability
+          </span>
         </div>
-        <button className="btn btn-primary">＋ Add service</button>
+
+        <button
+          onClick={() => alert('New item form: Add dishes, services, or amenities to suite catalog.')}
+          style={{
+            background: '#7a0c24',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '10px 18px',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          + Add New Item
+        </button>
       </div>
 
-      <div className={styles.serviceGrid}>
-        {serviceList.map((s, i) => (
-          <article className={styles.serviceCard} key={s.id}>
-            <div className={styles.serviceTop}>
-              <span className={styles.serviceMark}>{s.icon}</span>
-              <button
-                className={`switch ${s.active ? 'on' : ''}`}
-                role="switch"
-                aria-checked={s.active}
-                aria-label={`Toggle ${s.name}`}
-                onClick={() => toggleService(i)}
-              ></button>
-            </div>
-            <h3 className={styles.serviceName}>{s.name}</h3>
-            <p className={styles.serviceDesc}>{s.description}</p>
-            <div className={styles.serviceMeta}>
-              <span>{s.department}</span>
-              <span>{s.hours}</span>
-            </div>
-          </article>
+      {/* Category Filter Pills */}
+      <div className="admin-filter-bar">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`admin-filter-btn ${filter === cat ? 'active' : ''}`}
+            onClick={() => setFilter(cat)}
+          >
+            {cat}
+          </button>
         ))}
+      </div>
+
+      {/* Services Table */}
+      <div className="admin-panel-card">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Item / Service Name</th>
+              <th>Category</th>
+              <th>Fulfillment Department</th>
+              <th>Tariff / Price</th>
+              <th>Guest Availability</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredItems.map((item) => (
+              <tr key={item.id}>
+                <td>
+                  <strong style={{ color: '#0f172a' }}>{item.name}</strong>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>ID: {item.id}</div>
+                </td>
+                <td>
+                  <span
+                    style={{
+                      background: '#f1f5f9',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      color: '#475569',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.category}
+                  </span>
+                </td>
+                <td>
+                  <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
+                    {item.department}
+                  </span>
+                </td>
+                <td>
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>
+                    {item.price > 0 ? `₹${item.price}` : 'Complimentary'}
+                  </strong>
+                </td>
+                <td>
+                  <span
+                    style={{
+                      background: item.inStock ? '#d1fae5' : '#fee2e2',
+                      color: item.inStock ? '#065f46' : '#991b1b',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item.inStock ? '● Active / Available' : '○ Sold Out'}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    onClick={() => toggleStock(item.id)}
+                    style={{
+                      background: item.inStock ? '#fff1f2' : '#f0fdf4',
+                      color: item.inStock ? '#be123c' : '#15803d',
+                      border: `1px solid ${item.inStock ? '#fecdd3' : '#bbf7d0'}`,
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {item.inStock ? 'Mark Sold Out' : 'Mark Available'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

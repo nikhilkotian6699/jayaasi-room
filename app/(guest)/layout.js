@@ -1,15 +1,26 @@
 import './guest.css';
+import { AppProvider } from '@/context/AppContext';
+import GuestAppShell from '@/components/layout/GuestAppShell';
 
 export const metadata = {
-  title: 'Jayaasi Room — Guest Experience',
-  description: 'Your hotel room at your fingertips. Order food, request services, explore nearby places.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  title: 'Jayaasi Rooms — Business Suite Guest Application',
+  description: 'Luxury hotel guest application for Jayaasi Rooms Business Suite.',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#7a0c24',
 };
 
 export default function GuestLayout({ children }) {
   return (
-    <div className="guest-shell">
-      {children}
-    </div>
+    <AppProvider>
+      <GuestAppShell>
+        {children}
+      </GuestAppShell>
+    </AppProvider>
   );
 }

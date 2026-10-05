@@ -1,137 +1,106 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import styles from './admin.module.css';
-
-const navItems = [
-  { label: 'WORKSPACE', items: [
-    { name: 'Overview', icon: '▦', href: '/admin' },
-    { name: 'Requests', icon: '◷', href: '/admin/requests', badge: true },
-    { name: 'Rooms', icon: '▤', href: '/admin/rooms' },
-    { name: 'Services', icon: '✳', href: '/admin/services' },
-    { name: 'Food Menu', icon: '♨', href: '/admin/menu' },
-    { name: 'Travel & Places', icon: '⌖', href: '/admin/travel' },
-  ]},
-  { label: 'MANAGE', items: [
-    { name: 'Staff & Access', icon: '♙', href: '/admin/staff' },
-    { name: 'Analytics', icon: '▥', href: '/admin/analytics' },
-    { name: 'QR Codes', icon: '⊞', href: '/admin/qr' },
-    { name: 'Hotel Settings', icon: '⚙', href: '/admin/settings' },
-  ]},
-];
+import './admin.css';
 
 export default function AdminLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '/admin';
 
-  const isActive = (href) => {
-    if (href === '/admin') return pathname === '/admin';
-    return pathname.startsWith(href);
+  const navItems = [
+    { label: 'Overview', href: '/admin', icon: '📊' },
+    { label: 'Live Room Requests', href: '/admin/requests', icon: '🛎️', badge: '3' },
+    { label: 'Invoices & Billing', href: '/admin/invoices', icon: '🧾' },
+    { label: 'Suites & Rooms', href: '/admin/rooms', icon: '🚪' },
+    { label: 'Services & Menu', href: '/admin/services', icon: '🍽️' },
+  ];
+
+  const getPageTitle = () => {
+    if (pathname === '/admin/requests') return 'Live Room Service Requests';
+    if (pathname === '/admin/invoices') return 'Guest Folio & Invoices';
+    if (pathname === '/admin/rooms') return 'Suite & Room Status';
+    if (pathname === '/admin/services') return 'Service Catalog & Menu Controls';
+    return 'Hotel Command Center';
   };
 
-  const currentPage = navItems
-    .flatMap(g => g.items)
-    .find(item => isActive(item.href))?.name || 'Overview';
-
   return (
-    <div className={styles.shell}>
+    <div className="admin-shell">
       {/* Sidebar */}
-      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-        <Link href="/admin" className={styles.brand}>
-          <span className={styles.brandMark}>j<span>.</span></span>
-          <span className={styles.brandCopy}>
-            <strong>jayaasi</strong>
-            <small>ROOM OPERATIONS</small>
-          </span>
-        </Link>
-
-        <div className={styles.propertySwitcher}>
-          <div className={styles.propertyAvatar}>JR</div>
-          <div className={styles.propertyCopy}>
-            <strong>Jayaasi Rooms</strong>
-            <small>Business Suite · Pune</small>
+      <aside className="admin-sidebar">
+        <div className="admin-brand-header">
+          <div className="admin-brand-logo">J.</div>
+          <div>
+            <div className="admin-brand-title">Jayaasi Rooms</div>
+            <div className="admin-brand-subtitle">Hotel Operations</div>
           </div>
-          <span className={styles.chevron}>⌄</span>
         </div>
 
-        {navItems.map((group) => (
-          <div key={group.label}>
-            <div className={styles.navLabel}>{group.label}</div>
-            <nav className={styles.navList}>
-              {group.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`${styles.navItem} ${isActive(item.href) ? styles.navItemActive : ''}`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span className={styles.navIcon}>{item.icon}</span>
-                  {item.name}
-                  {item.badge && <span className={styles.navBadge}>5</span>}
-                </Link>
-              ))}
-            </nav>
+        <div className="admin-property-card">
+          <div className="admin-property-info">
+            <span className="admin-property-name">All Suites & Rooms (11)</span>
+            <span className="admin-property-status">PMS Connected · 6 Active</span>
           </div>
-        ))}
+          <span style={{ fontSize: '18px' }}>🏢</span>
+        </div>
 
-        <div className={styles.sidebarBottom}>
-          <div className={styles.helpCard}>
-            <div className={styles.helpIcon}>✦</div>
-            <strong>Need a hand?</strong>
-            <p>Our support team is here for you.</p>
-            <button className={styles.helpButton}>Get support <span>↗</span></button>
-          </div>
-          <div className={styles.userProfile}>
-            <div className={styles.userAvatar}>AK</div>
-            <div className={styles.userCopy}>
-              <strong>Arjun Kumar</strong>
-              <small>Hotel administrator</small>
+        <nav className="admin-nav-section">
+          <div className="admin-nav-heading">Operations Portal</div>
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`admin-nav-item ${isActive ? 'active' : ''}`}
+              >
+                <div className="admin-nav-icon-label">
+                  <span style={{ fontSize: '16px' }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+                {item.badge && <span className="admin-badge-count">{item.badge}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="admin-sidebar-footer">
+          <div className="admin-user-info">
+            <div className="admin-user-avatar">AK</div>
+            <div>
+              <div className="admin-user-name">Arjun Kumar</div>
+              <div className="admin-user-role">Operations Manager</div>
             </div>
-            <button className={styles.moreButton}>···</button>
           </div>
         </div>
       </aside>
 
-      {/* Main area */}
-      <main className={styles.main}>
-        <header className={styles.topbar}>
-          <button
-            className={styles.mobileMenu}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle navigation"
-          >
-            ☰
-          </button>
-          <div className={styles.breadcrumbs}>
-            <span>Jayaasi Rooms</span>
-            <b>/</b>
-            <strong>{currentPage}</strong>
+      {/* Main Content Area */}
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <div className="admin-topbar-left">
+            <h1 className="admin-page-title">{getPageTitle()}</h1>
+            <div className="admin-suite-badge">
+              <span>🏨</span>
+              <span>All 11 Suites Connected</span>
+            </div>
           </div>
-          <div className={styles.topbarActions}>
-            <span className={styles.liveStatus}><i></i> Live</span>
-            <button className={styles.iconButton}>⌕</button>
-            <button className={`${styles.iconButton} ${styles.notificationButton}`}>
-              🔔<i></i>
-            </button>
-            <div className={styles.topDivider}></div>
-            <button className={styles.todayButton}>Today <span>⌄</span></button>
+
+          <div className="admin-topbar-right">
+            <div className="admin-live-pulse">
+              <span className="admin-live-dot" />
+              <span>Live PMS Dispatch</span>
+            </div>
+            <Link href="/" target="_blank" className="admin-view-guest-btn">
+              <span>View Guest App</span>
+              <span>↗</span>
+            </Link>
           </div>
         </header>
 
-        <section className={styles.pageContent}>
+        <main className="admin-body">
           {children}
-        </section>
-      </main>
-
-      {/* Sidebar overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className={styles.sidebarOverlay}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        </main>
+      </div>
     </div>
   );
 }
