@@ -3,14 +3,32 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SUITE_ROOMS } from '@/lib/admin-data';
+import AdminQrPanel from '@/components/room-access/AdminQrPanel';
+import { useAdminAuth } from '@/context/AdminAuthContext';
+import ReportQrDamageModal from '@/components/admin/ReportQrDamageModal';
 
 export default function AdminRoomsPage() {
+  const { isOwner, isStaff, apiFetch } = useAdminAuth();
   const [rooms, setRooms] = useState(SUITE_ROOMS);
   const [selectedFloor, setSelectedFloor] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [inspectRoom, setInspectRoom] = useState(null);
   const [checkInModalRoom, setCheckInModalRoom] = useState(null);
   const [checkInForm, setCheckInForm] = useState({ guestName: '', checkOut: 'Tomorrow, 11:00 AM' });
+
+  // Damage report modal state
+  const [damageModalOpen, setDamageModalOpen] = useState(false);
+  const [damageRoomNum, setDamageRoomNum] = useState('204');
+
+  // Create room modal state (for Owner)
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newRoomNum, setNewRoomNum] = useState('');
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [newFloor, setNewFloor] = useState('Floor 2');
+  const [newRoomTypeId, setNewRoomTypeId] = useState('');
+  const [roomTypes, setRoomTypes] = useState([]);
+  const [actionSuccessMsg, setActionSuccessMsg] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch live rooms from API
   const fetchRooms = async () => {
@@ -30,6 +48,53 @@ export default function AdminRoomsPage() {
     const interval = setInterval(fetchRooms, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isOwner) {
+      apiFetch('/api/v1/room-types')
+        .then((data) => {
+          if (data?.roomTypes?.length) {
+            setRoomTypes(data.roomTypes);
+            setNewRoomTypeId(data.roomTypes[0].id);
+          }
+        })
+        .catch((e) => console.warn('Could not fetch room types:', e));
+    }
+  }, [isOwner, apiFetch]);
+
+  const handleCreateRoom = async (e) => {
+    e.preventDefault();
+    if (!newRoomNum || !newDisplayName) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        roomNumber: newRoomNum,
+        displayName: newDisplayName,
+        roomTypeId: newRoomTypeId || (roomTypes[0] ? roomTypes[0].id : null),
+        floor: newFloor,
+      };
+
+      const res = await apiFetch('/api/v1/rooms', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (res?.success) {
+        setActionSuccessMsg(`Room ${newRoomNum} created successfully with Permanent QR: ${res.qr?.qrPublicId || 'ACTIVE'}`);
+        setCreateModalOpen(false);
+        setNewRoomNum('');
+        setNewDisplayName('');
+        fetchRooms();
+        setTimeout(() => setActionSuccessMsg(null), 6000);
+      } else {
+        alert(res?.error || 'Failed to create room');
+      }
+    } catch (err) {
+      alert('Error creating room: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleStatusChange = async (roomNumber, newStatus, guest = null) => {
     setRooms((prev) =>
@@ -90,6 +155,36 @@ export default function AdminRoomsPage() {
 
   return (
     <div>
+      {/* Success Notification Banner */}
+      {actionSuccessMsg && (
+        <div
+          style={{
+            background: '#ecfdf5',
+            color: '#065f46',
+            border: '1.5px solid #a7f3d0',
+            padding: '12px 18px',
+            borderRadius: '12px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '13.5px',
+            fontWeight: 600,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>✅</span>
+            <span>{actionSuccessMsg}</span>
+          </div>
+          <button
+            onClick={() => setActionSuccessMsg(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065f46', fontWeight: 800 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Header & Metrics */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
@@ -97,23 +192,47 @@ export default function AdminRoomsPage() {
             Suites & Room Operations — All Rooms ({rooms.length})
           </h2>
           <span style={{ fontSize: '13px', color: '#64748b' }}>
-            Live status, housekeeping workflow, keycard management & direct folio access for all 11 rooms
+            Live status, housekeeping workflow, keycard management & direct folio access for all rooms
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <span style={{ fontSize: '12.5px', background: '#fee2e2', color: '#991b1b', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', fontWeight: 600 }}>
-            🔴 Occupied: <strong>{occupiedCount}</strong>
-          </span>
-          <span style={{ fontSize: '12.5px', background: '#fef3c7', color: '#92400e', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fde68a', fontWeight: 600 }}>
-            🟡 Cleaning: <strong>{cleaningCount}</strong>
-          </span>
-          <span style={{ fontSize: '12.5px', background: '#d1fae5', color: '#065f46', padding: '6px 12px', borderRadius: '8px', border: '1px solid #a7f3d0', fontWeight: 600 }}>
-            🟢 Available: <strong>{availableCount}</strong>
-          </span>
-          <span style={{ fontSize: '12.5px', background: '#f1f5f9', color: '#475569', padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}>
-            ⚪ Maint: <strong>{maintenanceCount}</strong>
-          </span>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {isOwner && (
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              style={{
+                background: '#7a0c24',
+                color: '#ffffff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(122,12,36,0.2)',
+              }}
+            >
+              <span>+ Add Room</span>
+            </button>
+          )}
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <span style={{ fontSize: '12.5px', background: '#fee2e2', color: '#991b1b', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', fontWeight: 600 }}>
+              🔴 Occupied: <strong>{occupiedCount}</strong>
+            </span>
+            <span style={{ fontSize: '12.5px', background: '#fef3c7', color: '#92400e', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fde68a', fontWeight: 600 }}>
+              🟡 Cleaning: <strong>{cleaningCount}</strong>
+            </span>
+            <span style={{ fontSize: '12.5px', background: '#d1fae5', color: '#065f46', padding: '6px 12px', borderRadius: '8px', border: '1px solid #a7f3d0', fontWeight: 600 }}>
+              🟢 Available: <strong>{availableCount}</strong>
+            </span>
+            <span style={{ fontSize: '12.5px', background: '#f1f5f9', color: '#475569', padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}>
+              ⚪ Maint: <strong>{maintenanceCount}</strong>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -287,14 +406,14 @@ export default function AdminRoomsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => setInspectRoom(room)}
                   style={{
                     background: '#f1f5f9',
                     color: '#334155',
                     border: '1px solid #cbd5e1',
-                    padding: '8px 12px',
+                    padding: '8px 11px',
                     borderRadius: '8px',
                     fontSize: '12px',
                     fontWeight: 600,
@@ -302,6 +421,31 @@ export default function AdminRoomsPage() {
                   }}
                 >
                   Room Profile
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDamageRoomNum(room.number);
+                    setDamageModalOpen(true);
+                  }}
+                  style={{
+                    background: '#fffbeb',
+                    color: '#b45309',
+                    border: '1px solid #fde68a',
+                    padding: '8px 11px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="Report QR damage for this room"
+                >
+                  <span>⚠️</span>
+                  <span>Report QR</span>
                 </button>
 
                 <a
@@ -329,22 +473,24 @@ export default function AdminRoomsPage() {
 
                 {room.status === 'Occupied' ? (
                   <>
-                    <Link
-                      href={`/admin/invoices?room=${room.number}`}
-                      style={{
-                        flex: 1,
-                        textAlign: 'center',
-                        background: '#7a0c24',
-                        color: '#ffffff',
-                        padding: '8px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      View Folio
-                    </Link>
+                    {isOwner && (
+                      <Link
+                        href={`/admin/invoices?room=${room.number}`}
+                        style={{
+                          flex: 1,
+                          textAlign: 'center',
+                          background: '#7a0c24',
+                          color: '#ffffff',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        View Folio
+                      </Link>
+                    )}
                     <button
                       onClick={() => handleStatusChange(room.number, 'Cleaning')}
                       style={{
@@ -356,6 +502,7 @@ export default function AdminRoomsPage() {
                         fontSize: '12px',
                         fontWeight: 600,
                         cursor: 'pointer',
+                        flex: isOwner ? 'none' : 1,
                       }}
                     >
                       Check-Out
@@ -485,6 +632,20 @@ export default function AdminRoomsPage() {
               <strong>Occupant Info:</strong> {inspectRoom.guest}
               <div style={{ marginTop: '2px' }}>Check-out: {inspectRoom.checkOut}</div>
             </div>
+
+            {/* QR & Session Management Panel */}
+            {inspectRoom.id && (
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  🔲 QR Code &amp; Sessions
+                </div>
+                <AdminQrPanel
+                  roomId={inspectRoom.id}
+                  roomNumber={inspectRoom.number}
+                  hotelCode={inspectRoom.hotelCode || 'LIVINN'}
+                />
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', alignItems: 'center' }}>
               <a
@@ -616,6 +777,152 @@ export default function AdminRoomsPage() {
           </div>
         </div>
       )}
+
+      {/* Create Room Modal (Owner Admin Only) */}
+      {createModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+            backdropFilter: 'blur(3px)',
+          }}
+          onClick={() => setCreateModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '28px',
+              maxWidth: '480px',
+              width: '100%',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
+                  Create New Suite / Room
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  Generates Permanent Room QR Code automatically upon creation
+                </span>
+              </div>
+              <button
+                onClick={() => setCreateModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRoom} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Room / Suite Number:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 204 or 401"
+                  value={newRoomNum}
+                  onChange={(e) => setNewRoomNum(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Display Name:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Presidential Palm Suite"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Floor Location:
+                </label>
+                <select
+                  value={newFloor}
+                  onChange={(e) => setNewFloor(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                >
+                  <option value="Floor 1">Floor 1 (Ground Garden)</option>
+                  <option value="Floor 2">Floor 2 (Suites Wing)</option>
+                  <option value="Floor 3">Floor 3 (Premier Wing)</option>
+                  <option value="Floor 4">Floor 4 (Penthouse Level)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Room Type:
+                </label>
+                <select
+                  value={newRoomTypeId}
+                  onChange={(e) => setNewRoomTypeId(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                >
+                  {roomTypes.length > 0 ? (
+                    roomTypes.map((rt) => (
+                      <option key={rt.id} value={rt.id}>
+                        {rt.name} ({rt.code}) — ₹{Number(rt.basePrice).toLocaleString()}/night
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Standard Executive Suite</option>
+                  )}
+                </select>
+              </div>
+
+              <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11.5px', color: '#64748b' }}>
+                ℹ️ Creating this room will generate a permanent cryptographic QR code and entry in the Jayaasi room directory.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setCreateModalOpen(false)}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '10px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{ background: '#7a0c24', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {isSubmitting ? 'Creating & Generating QR...' : 'Create Room & QR'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR Damage Report Modal */}
+      <ReportQrDamageModal
+        isOpen={damageModalOpen}
+        onClose={() => setDamageModalOpen(false)}
+        defaultRoomNumber={damageRoomNum}
+        onSuccess={() => {
+          setActionSuccessMsg(`QR Damage ticket reported for Room ${damageRoomNum}. Owner has been notified.`);
+          setTimeout(() => setActionSuccessMsg(null), 5000);
+        }}
+      />
     </div>
   );
 }

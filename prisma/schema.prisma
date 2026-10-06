@@ -76,6 +76,63 @@ enum Department {
   TRANSPORT
   CONCIERGE
   RETAIL
+  MAINTENANCE
+  FRONT_DESK
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum TaskStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TaskType {
+  HOUSEKEEPING
+  ROOM_SERVICE
+  LAUNDRY
+  MAINTENANCE
+  AMENITY
+  QR_REPLACEMENT
+  OTHER
+}
+
+enum QrReplacementStatus {
+  REPORTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  ORDER_REQUESTED
+  ORDERED
+  DISPATCHED
+  DELIVERED
+  INSTALLED
+  CLOSED
+}
+
+enum QrOrderStatus {
+  DRAFT
+  ORDERED
+  CONFIRMED
+  DISPATCHED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
 }
 
 enum FolioStatus {
@@ -98,6 +155,18 @@ enum DietaryType {
   NON_VEG
   JAIN
   VEGAN
+}
+
+enum QrStatus {
+  ACTIVE
+  REVOKED
+  DISABLED
+}
+
+enum SessionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -144,6 +213,13 @@ model Hotel {
   taxConfigs        TaxConfig[]
   notifications     Notification[]
   auditLogs         AuditLog[]
+  floors            Floor[]
+  tasks             Task[]
+  qrReplacements    QrReplacement[]
+  qrInventory       QrInventory[]
+  qrOrders          QrOrder[]
+  userRoles         UserRole[]
+  userAuditLogs     UserAuditLog[]
 
   @@map("hotels")
 }
@@ -175,6 +251,7 @@ model Room {
   hotelId            String             @map("hotel_id") @db.Uuid
   roomTypeId         String             @map("room_type_id") @db.Uuid
   floor              String             @db.VarChar(20)
+  floorId            String?            @map("floor_id") @db.Uuid
   roomNumber         String             @map("room_number") @db.VarChar(20)
   displayName        String             @map("display_name") @db.VarChar(100)
   status             RoomStatus         @default(AVAILABLE)
@@ -186,15 +263,71 @@ model Room {
   // Relations
   hotel           Hotel            @relation(fields: [hotelId], references: [id], onDelete: Restrict)
   roomType        RoomType         @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  floorRef        Floor?           @relation(fields: [floorId], references: [id], onDelete: SetNull)
   stays           Stay[]
   guestSessions   GuestSession[]
   orders          Order[]
   serviceRequests ServiceRequest[]
+  roomQrCodes     RoomQrCode[]
+  roomSessions    RoomSession[]
+  tasks           Task[]
+  qrReplacements  QrReplacement[]
 
   @@unique([hotelId, roomNumber])
   @@index([hotelId, status])
   @@index([hotelId, floor])
+  @@index([floorId])
   @@map("rooms")
+}
+
+// ─────────────────────────────────────────────────────────────
+// QR CODE IDENTITY
+// ─────────────────────────────────────────────────────────────
+
+model RoomQrCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  roomId      String    @map("room_id") @db.Uuid
+  hotelId     String    @map("hotel_id") @db.Uuid
+  qrPublicId  String    @unique @map("qr_public_id") @db.VarChar(30)
+  qrVersion   Int       @default(1) @map("qr_version")
+  status      QrStatus  @default(ACTIVE)
+  generatedAt DateTime  @default(now()) @map("generated_at") @db.Timestamptz(6)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  room  Room  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, status])
+  @@index([qrPublicId])
+  @@map("room_qr_codes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TEMPORARY ROOM SESSION (anonymous, QR-scan-based)
+// ─────────────────────────────────────────────────────────────
+
+model RoomSession {
+  id                  String        @id @default(uuid()) @db.Uuid
+  roomId              String        @map("room_id") @db.Uuid
+  hotelId             String        @map("hotel_id") @db.Uuid
+  tokenHash           String        @unique @map("token_hash") @db.VarChar(128)
+  status              SessionStatus @default(ACTIVE)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt           DateTime      @map("expires_at") @db.Timestamptz(6)
+  lastActivityAt      DateTime      @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  revokedAt           DateTime?     @map("revoked_at") @db.Timestamptz(6)
+  deviceFingerprintHash String?     @map("device_fingerprint_hash") @db.VarChar(128)
+  ipHash              String?       @map("ip_hash") @db.VarChar(128)
+
+  // Relations
+  room  Room  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, status, expiresAt])
+  @@index([tokenHash])
+  @@index([hotelId, createdAt])
+  @@map("room_sessions")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -691,4 +824,278 @@ model AuditLog {
   @@index([hotelId, entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// FLOORS
+// ─────────────────────────────────────────────────────────────
+
+model Floor {
+  id          String   @id @default(uuid()) @db.Uuid
+  hotelId     String   @map("hotel_id") @db.Uuid
+  floorNumber String   @map("floor_number") @db.VarChar(20)
+  name        String   @db.VarChar(100)
+  displayOrder Int     @default(0) @map("display_order")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  hotel Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  rooms Room[]
+
+  @@unique([hotelId, floorNumber])
+  @@index([hotelId, displayOrder])
+  @@map("floors")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RBAC: USERS, ROLES & PERMISSIONS
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id             String     @id @default(uuid()) @db.Uuid
+  name           String     @db.VarChar(100)
+  email          String     @unique @db.VarChar(150)
+  phone          String?    @db.VarChar(30)
+  passwordHash   String?    @map("password_hash") @db.VarChar(255)
+  authProviderId String?    @map("auth_provider_id") @db.VarChar(100)
+  status         UserStatus @default(ACTIVE)
+  lastLoginAt    DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  userRoles               UserRole[]
+  createdTasks            Task[]                 @relation("CreatedTasks")
+  assignedTasks           Task[]                 @relation("AssignedTasks")
+  taskComments            TaskComment[]
+  reportedQrReplacements  QrReplacement[]        @relation("ReportedReplacements")
+  installedQrReplacements QrReplacement[]        @relation("InstalledReplacements")
+  qrReplacementHistories  QrReplacementHistory[]
+  createdQrOrders         QrOrder[]
+  auditLogs               UserAuditLog[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(60)
+  description String?  @db.Text
+  status      String   @default("ACTIVE") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique @db.VarChar(80)
+  description String?  @db.Text
+  resource    String   @db.VarChar(60)
+  action      String   @db.VarChar(60)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@index([resource])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  roleId     String      @map("role_id") @db.Uuid
+  hotelId    String      @map("hotel_id") @db.Uuid
+  department Department?
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role  Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, hotelId])
+  @@index([hotelId, roleId])
+  @@map("user_roles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TASKS MODULE
+// ─────────────────────────────────────────────────────────────
+
+model Task {
+  id           String       @id @default(uuid()) @db.Uuid
+  hotelId      String       @map("hotel_id") @db.Uuid
+  roomId       String?      @map("room_id") @db.Uuid
+  createdById  String?      @map("created_by_id") @db.Uuid
+  assignedToId String?      @map("assigned_to_id") @db.Uuid
+  taskType     TaskType     @map("task_type")
+  priority     TaskPriority @default(NORMAL)
+  title        String       @db.VarChar(150)
+  description  String?      @db.Text
+  status       TaskStatus   @default(PENDING)
+  dueAt        DateTime?    @map("due_at") @db.Timestamptz(6)
+  completedAt  DateTime?    @map("completed_at") @db.Timestamptz(6)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  hotel    Hotel         @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room     Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  creator  User?         @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
+  assignee User?         @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  comments TaskComment[]
+
+  @@index([hotelId, status])
+  @@index([assignedToId, status])
+  @@index([roomId])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  comment   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// QR REPLACEMENT & DAMAGE WORKFLOW
+// ─────────────────────────────────────────────────────────────
+
+model QrReplacement {
+  id            String              @id @default(uuid()) @db.Uuid
+  hotelId       String              @map("hotel_id") @db.Uuid
+  roomId        String              @map("room_id") @db.Uuid
+  reportedById  String              @map("reported_by_id") @db.Uuid
+  reason        String              @db.VarChar(150)
+  description   String?             @db.Text
+  photoUrl      String?             @map("photo_url") @db.VarChar(255)
+  status        QrReplacementStatus @default(REPORTED)
+  oldQrId       String?             @map("old_qr_id") @db.Uuid
+  newQrId       String?             @map("new_qr_id") @db.Uuid
+  installedById String?             @map("installed_by_id") @db.Uuid
+  installedAt   DateTime?           @map("installed_at") @db.Timestamptz(6)
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  hotel     Hotel                  @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room      Room                   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reporter  User                   @relation("ReportedReplacements", fields: [reportedById], references: [id], onDelete: Restrict)
+  installer User?                  @relation("InstalledReplacements", fields: [installedById], references: [id], onDelete: SetNull)
+  history   QrReplacementHistory[]
+
+  @@index([hotelId, status])
+  @@index([roomId])
+  @@map("qr_replacements")
+}
+
+model QrReplacementHistory {
+  id            String              @id @default(uuid()) @db.Uuid
+  replacementId String              @map("replacement_id") @db.Uuid
+  status        QrReplacementStatus
+  notes         String?             @db.Text
+  changedById   String              @map("changed_by_id") @db.Uuid
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  replacement QrReplacement @relation(fields: [replacementId], references: [id], onDelete: Cascade)
+  changedBy   User          @relation(fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([replacementId])
+  @@map("qr_replacement_history")
+}
+
+// ─────────────────────────────────────────────────────────────
+// QR INVENTORY & QR PROCUREMENT
+// ─────────────────────────────────────────────────────────────
+
+model QrInventory {
+  id           String   @id @default(uuid()) @db.Uuid
+  hotelId      String   @map("hotel_id") @db.Uuid
+  sku          String   @db.VarChar(50)
+  qrBoxType    String   @map("qr_box_type") @db.VarChar(100)
+  quantity     Int      @default(0)
+  minimumStock Int      @default(10) @map("minimum_stock")
+  supplierId   String?  @map("supplier_id") @db.VarChar(100)
+  status       String   @default("IN_STOCK") @db.VarChar(30)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, sku])
+  @@index([hotelId, status])
+  @@map("qr_inventory")
+}
+
+model QrOrder {
+  id              String        @id @default(uuid()) @db.Uuid
+  hotelId         String        @map("hotel_id") @db.Uuid
+  orderNumber     String        @unique @map("order_number") @db.VarChar(50)
+  quantity        Int
+  qrBoxType       String        @map("qr_box_type") @db.VarChar(100)
+  supplierName    String        @map("supplier_name") @db.VarChar(120)
+  deliveryAddress String        @map("delivery_address") @db.Text
+  status          QrOrderStatus @default(ORDERED)
+  createdById     String        @map("created_by_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  hotel   Hotel @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  creator User  @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([hotelId, status])
+  @@map("qr_orders")
+}
+
+// ─────────────────────────────────────────────────────────────
+// USER & RBAC AUDIT LOGS
+// ─────────────────────────────────────────────────────────────
+
+model UserAuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  hotelId      String   @map("hotel_id") @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String   @db.VarChar(80)
+  resourceType String   @map("resource_type") @db.VarChar(60)
+  resourceId   String   @map("resource_id") @db.VarChar(60)
+  oldValue     Json?    @map("old_value")
+  newValue     Json?    @map("new_value")
+  ipHash       String?  @map("ip_hash") @db.VarChar(128)
+  userAgent    String?  @map("user_agent") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([hotelId, resourceType, resourceId])
+  @@index([hotelId, action])
+  @@index([createdAt])
+  @@map("user_audit_logs")
 }

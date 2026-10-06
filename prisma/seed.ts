@@ -1,4 +1,21 @@
-import { PrismaClient, RoomStatus, HousekeepingStatus, StayStatus, StaffRole, Department, DietaryType } from '@prisma/client';
+import {
+  PrismaClient,
+  RoomStatus,
+  HousekeepingStatus,
+  StayStatus,
+  StaffRole,
+  Department,
+  DietaryType,
+  QrStatus,
+  TaskType,
+  TaskPriority,
+  TaskStatus,
+  QrReplacementStatus,
+  QrOrderStatus,
+  UserStatus,
+} from '@prisma/client';
+import crypto from 'crypto';
+import { SYSTEM_PERMISSIONS, STAFF_DEFAULT_PERMISSION_KEYS, hashPassword } from '../lib/db/rbac';
 
 const prisma = new PrismaClient();
 
@@ -496,7 +513,12 @@ async function main() {
   // 11. Folio & Folio Charges for Suite 204
   const folio204 = await prisma.folio.upsert({
     where: { folioNumber: 'FOLIO-2026-204' },
-    update: {},
+    update: {
+      subtotal: 11900.0,
+      taxTotal: 595.0,
+      discountTotal: 0.0,
+      grandTotal: 12495.0,
+    },
     create: {
       hotelId: hotel.id,
       stayId: stay204.id,
@@ -607,6 +629,389 @@ async function main() {
     });
   }
   console.log(`✓ Live operational service requests seeded`);
+
+  // 14. Floors
+  const floor2 = await prisma.floor.upsert({
+    where: { hotelId_floorNumber: { hotelId: hotel.id, floorNumber: '2' } },
+    update: {},
+    create: {
+      hotelId: hotel.id,
+      floorNumber: '2',
+      name: 'Second Floor Suites',
+      displayOrder: 2,
+      active: true,
+    },
+  });
+
+  const floor3 = await prisma.floor.upsert({
+    where: { hotelId_floorNumber: { hotelId: hotel.id, floorNumber: '3' } },
+    update: {},
+    create: {
+      hotelId: hotel.id,
+      floorNumber: '3',
+      name: 'Third Floor Premier',
+      displayOrder: 3,
+      active: true,
+    },
+  });
+
+  // Link rooms to their floors
+  await prisma.room.updateMany({
+    where: { hotelId: hotel.id, floor: 'Floor 2' },
+    data: { floorId: floor2.id },
+  });
+  await prisma.room.updateMany({
+    where: { hotelId: hotel.id, floor: 'Floor 3' },
+    data: { floorId: floor3.id },
+  });
+  console.log(`✓ Floors seeded and linked to rooms`);
+
+  // 15. Room QR Codes (Permanent QR identities)
+  const allRooms = await prisma.room.findMany({ where: { hotelId: hotel.id } });
+  for (const rm of allRooms) {
+    const existingQr = await prisma.roomQrCode.findFirst({
+      where: { roomId: rm.id, status: QrStatus.ACTIVE },
+    });
+    if (!existingQr) {
+      const publicId = `qr_${rm.roomNumber}_${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      await prisma.roomQrCode.create({
+        data: {
+          roomId: rm.id,
+          hotelId: hotel.id,
+          qrPublicId: publicId,
+          qrVersion: 1,
+          status: QrStatus.ACTIVE,
+        },
+      });
+    }
+  }
+  console.log(`✓ Active QR codes generated and assigned for all ${allRooms.length} rooms`);
+
+  // 16. RBAC Permissions Catalog
+  for (const perm of SYSTEM_PERMISSIONS) {
+    await prisma.permission.upsert({
+      where: { key: perm.key },
+      update: { description: perm.description, resource: perm.resource, action: perm.action },
+      create: {
+        key: perm.key,
+        resource: perm.resource,
+        action: perm.action,
+        description: perm.description,
+      },
+    });
+  }
+  console.log(`✓ ${SYSTEM_PERMISSIONS.length} system permissions seeded`);
+
+  // 17. Roles: OWNER_ADMIN & STAFF_ADMIN
+  const ownerRole = await prisma.role.upsert({
+    where: { name: 'OWNER_ADMIN' },
+    update: { description: 'Full business and hotel operational control' },
+    create: {
+      name: 'OWNER_ADMIN',
+      description: 'Full business and hotel operational control',
+      status: 'ACTIVE',
+    },
+  });
+
+  const staffRole = await prisma.role.upsert({
+    where: { name: 'STAFF_ADMIN' },
+    update: { description: 'Limited operational task and department control' },
+    create: {
+      name: 'STAFF_ADMIN',
+      description: 'Limited operational task and department control',
+      status: 'ACTIVE',
+    },
+  });
+
+  // Assign ALL permissions to OWNER_ADMIN
+  const allDbPerms = await prisma.permission.findMany();
+  for (const p of allDbPerms) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_permissionId: { roleId: ownerRole.id, permissionId: p.id } },
+      update: {},
+      create: { roleId: ownerRole.id, permissionId: p.id },
+    });
+  }
+
+  // Assign ONLY operational permissions to STAFF_ADMIN
+  const staffPerms = allDbPerms.filter((p) => STAFF_DEFAULT_PERMISSION_KEYS.includes(p.key));
+  for (const p of staffPerms) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_permissionId: { roleId: staffRole.id, permissionId: p.id } },
+      update: {},
+      create: { roleId: staffRole.id, permissionId: p.id },
+    });
+  }
+  console.log(`✓ Roles OWNER_ADMIN and STAFF_ADMIN seeded with permissions`);
+
+  // 18. RBAC Users
+  const ownerPasswordHash = hashPassword('OwnerPass123!');
+  const staffPasswordHash = hashPassword('StaffPass123!');
+
+  // Owner User
+  const ownerUser = await prisma.user.upsert({
+    where: { email: 'owner@livinn.com' },
+    update: { passwordHash: ownerPasswordHash, status: UserStatus.ACTIVE },
+    create: {
+      name: 'Vikramaditya Singhania',
+      email: 'owner@livinn.com',
+      phone: '+91 99887 66554',
+      passwordHash: ownerPasswordHash,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId_hotelId: { userId: ownerUser.id, roleId: ownerRole.id, hotelId: hotel.id } },
+    update: {},
+    create: {
+      userId: ownerUser.id,
+      roleId: ownerRole.id,
+      hotelId: hotel.id,
+      department: Department.FRONT_DESK,
+    },
+  });
+
+  // Staff User 1: Housekeeping
+  const staffHousekeeping = await prisma.user.upsert({
+    where: { email: 'sunita.housekeeping@jayaasi.com' },
+    update: { passwordHash: staffPasswordHash, status: UserStatus.ACTIVE },
+    create: {
+      name: 'Sunita Patil',
+      email: 'sunita.housekeeping@jayaasi.com',
+      phone: '+91 98230 11223',
+      passwordHash: staffPasswordHash,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId_hotelId: { userId: staffHousekeeping.id, roleId: staffRole.id, hotelId: hotel.id } },
+    update: { department: Department.HOUSEKEEPING },
+    create: {
+      userId: staffHousekeeping.id,
+      roleId: staffRole.id,
+      hotelId: hotel.id,
+      department: Department.HOUSEKEEPING,
+    },
+  });
+
+  // Staff User 2: Kitchen
+  const staffKitchen = await prisma.user.upsert({
+    where: { email: 'chef.kitchen@jayaasi.com' },
+    update: { passwordHash: staffPasswordHash, status: UserStatus.ACTIVE },
+    create: {
+      name: 'Chef Rajesh Marathe',
+      email: 'chef.kitchen@jayaasi.com',
+      phone: '+91 98230 77889',
+      passwordHash: staffPasswordHash,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId_hotelId: { userId: staffKitchen.id, roleId: staffRole.id, hotelId: hotel.id } },
+    update: { department: Department.KITCHEN },
+    create: {
+      userId: staffKitchen.id,
+      roleId: staffRole.id,
+      hotelId: hotel.id,
+      department: Department.KITCHEN,
+    },
+  });
+
+  // Staff User 3: Maintenance
+  const staffMaintenance = await prisma.user.upsert({
+    where: { email: 'vikram.maintenance@jayaasi.com' },
+    update: { passwordHash: staffPasswordHash, status: UserStatus.ACTIVE },
+    create: {
+      name: 'Vikram Shinde',
+      email: 'vikram.maintenance@jayaasi.com',
+      phone: '+91 98230 44556',
+      passwordHash: staffPasswordHash,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId_hotelId: { userId: staffMaintenance.id, roleId: staffRole.id, hotelId: hotel.id } },
+    update: { department: Department.MAINTENANCE },
+    create: {
+      userId: staffMaintenance.id,
+      roleId: staffRole.id,
+      hotelId: hotel.id,
+      department: Department.MAINTENANCE,
+    },
+  });
+  console.log(`✓ RBAC users seeded: Owner and Staff (Housekeeping, Kitchen, Maintenance)`);
+
+  // 19. Multi-Tenant Hotel Tenant B ("Emerald Bay Resort")
+  const hotelB = await prisma.hotel.upsert({
+    where: { slug: 'emerald-bay' },
+    update: {},
+    create: {
+      name: 'Emerald Bay Resort',
+      slug: 'emerald-bay',
+      code: 'EMERALD-GOA',
+      legalName: 'Emerald Hospitality Goa LLP',
+      address: 'Calangute Beach Road, North Goa',
+      city: 'Goa',
+      state: 'Goa',
+      country: 'India',
+      postalCode: '403516',
+      phone: '+91 832 245 8800',
+      email: 'stay@emeraldbay.com',
+      currency: 'INR',
+      timezone: 'Asia/Kolkata',
+      active: true,
+    },
+  });
+
+  // Room Type & Room 204 in Hotel B (to test cross-hotel isolation)
+  const roomTypeB = await prisma.roomType.upsert({
+    where: { hotelId_code: { hotelId: hotelB.id, code: 'VILLA-SEA' } },
+    update: {},
+    create: {
+      hotelId: hotelB.id,
+      code: 'VILLA-SEA',
+      name: 'Sea Facing Villa',
+      basePrice: 12000,
+      active: true,
+    },
+  });
+
+  await prisma.room.upsert({
+    where: { hotelId_roomNumber: { hotelId: hotelB.id, roomNumber: '204' } },
+    update: {},
+    create: {
+      hotelId: hotelB.id,
+      roomTypeId: roomTypeB.id,
+      floor: 'Floor 2',
+      roomNumber: '204',
+      displayName: 'Ocean View Villa 204',
+      status: RoomStatus.AVAILABLE,
+      active: true,
+    },
+  });
+
+  const ownerBUser = await prisma.user.upsert({
+    where: { email: 'owner@emeraldbay.com' },
+    update: { passwordHash: ownerPasswordHash, status: UserStatus.ACTIVE },
+    create: {
+      name: 'Goa Owner Admin',
+      email: 'owner@emeraldbay.com',
+      passwordHash: ownerPasswordHash,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId_hotelId: { userId: ownerBUser.id, roleId: ownerRole.id, hotelId: hotelB.id } },
+    update: {},
+    create: {
+      userId: ownerBUser.id,
+      roleId: ownerRole.id,
+      hotelId: hotelB.id,
+    },
+  });
+  console.log(`✓ Multi-tenant isolated Hotel B seeded: ${hotelB.name} (${hotelB.code})`);
+
+  // 20. QR Inventory
+  await prisma.qrInventory.upsert({
+    where: { hotelId_sku: { hotelId: hotel.id, sku: 'QR-ACRYLIC-STD' } },
+    update: { quantity: 120, minimumStock: 25 },
+    create: {
+      hotelId: hotel.id,
+      sku: 'QR-ACRYLIC-STD',
+      qrBoxType: 'Standard Acrylic Room QR Box',
+      quantity: 120,
+      minimumStock: 25,
+      supplierId: 'SUP-JAYAASI-CORE',
+      status: 'IN_STOCK',
+    },
+  });
+
+  await prisma.qrInventory.upsert({
+    where: { hotelId_sku: { hotelId: hotel.id, sku: 'QR-BRASS-PREM' } },
+    update: { quantity: 30, minimumStock: 10 },
+    create: {
+      hotelId: hotel.id,
+      sku: 'QR-BRASS-PREM',
+      qrBoxType: 'Brushed Brass QR Plaque',
+      quantity: 30,
+      minimumStock: 10,
+      supplierId: 'SUP-LUX-BRASS',
+      status: 'IN_STOCK',
+    },
+  });
+  console.log(`✓ QR Inventory items seeded`);
+
+  // 21. Sample Operational Tasks
+  const room204Id = roomMap['204'];
+  const room205Id = roomMap['205'];
+
+  await prisma.task.create({
+    data: {
+      hotelId: hotel.id,
+      roomId: room204Id,
+      createdById: ownerUser.id,
+      assignedToId: staffHousekeeping.id,
+      taskType: TaskType.HOUSEKEEPING,
+      priority: TaskPriority.HIGH,
+      title: 'Turn-down and linen change for Suite 204',
+      description: 'Guest requested extra hypoallergenic pillows and fresh Egyptian cotton sheets.',
+      status: TaskStatus.ASSIGNED,
+    },
+  });
+
+  await prisma.task.create({
+    data: {
+      hotelId: hotel.id,
+      roomId: room205Id,
+      createdById: ownerUser.id,
+      assignedToId: staffMaintenance.id,
+      taskType: TaskType.MAINTENANCE,
+      priority: TaskPriority.NORMAL,
+      title: 'Inspect bathroom thermostatic mixer in Room 205',
+      description: 'Scheduled preventive check for water temperature regulator.',
+      status: TaskStatus.PENDING,
+    },
+  });
+  console.log(`✓ Sample operational tasks seeded`);
+
+  // 22. QR Damage Request for Room 204
+  const existingActiveQr204 = await prisma.roomQrCode.findFirst({
+    where: { roomId: room204Id, status: QrStatus.ACTIVE },
+  });
+
+  const existingDamageReport = await prisma.qrReplacement.findFirst({
+    where: { roomId: room204Id, status: QrReplacementStatus.REPORTED },
+  });
+
+  if (!existingDamageReport) {
+    const rep204 = await prisma.qrReplacement.create({
+      data: {
+        hotelId: hotel.id,
+        roomId: room204Id,
+        reportedById: staffHousekeeping.id,
+        reason: 'QR box damaged — surface scratched and corner cracked',
+        description: 'Nightstand QR box has visible abrasion and camera struggles to focus.',
+        photoUrl: '/images/qr-damaged-sample.png',
+        status: QrReplacementStatus.REPORTED,
+        oldQrId: existingActiveQr204?.id || null,
+      },
+    });
+
+    await prisma.qrReplacementHistory.create({
+      data: {
+        replacementId: rep204.id,
+        status: QrReplacementStatus.REPORTED,
+        notes: 'Damage reported during morning room inspection by Sunita P.',
+        changedById: staffHousekeeping.id,
+      },
+    });
+  }
+  console.log(`✓ Room 204 QR damage report seeded in status REPORTED`);
 
   console.log('✅ Deterministic seed completed successfully!');
 }
