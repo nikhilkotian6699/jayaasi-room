@@ -65,29 +65,13 @@ export default function ServicesGrid() {
               className="sc-card"
               title={svc.name}
             >
-              <div className="sc-img-wrap" style={{ position: 'relative' }}>
+              <div className="sc-img-wrap">
                 <img
                   src={svc.image}
                   alt={svc.name}
                   className="sc-img"
+                  loading="lazy"
                 />
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
-                    background: '#111111',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    padding: '3px 8px',
-                    borderRadius: '999px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                    letterSpacing: '-0.2px',
-                  }}
-                >
-                  {svc.tag}
-                </span>
               </div>
               <div className="sc-btn-row">
                 <span className="sc-btn">click here</span>
